@@ -2,6 +2,9 @@ import torch.nn as nn
 import torch
 from env_const import MEMORY_LENGTH, VISION_SIZE, ACTION_SPACE
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # ------------------- НЕЙРОННАЯ СЕТЬ DQN -------------------
 class DQN(nn.Module):
     def __init__(self):

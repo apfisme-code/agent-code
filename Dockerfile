@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копирование исходного кода
-COPY main.py virtual_world.py agent.py dqn.py env_const.py .
+COPY . .
 
 # Создание папки для сохранения моделей
 RUN mkdir -p /app/models

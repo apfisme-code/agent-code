@@ -1,11 +1,11 @@
 from collections import deque
 import numpy as np
 import torch
-from agent_base import AgentBase
-from dqn import DQN
+from .agent_base import AgentBase
+from dqn import DQN, device
 from env_const import MEMORY_LENGTH, VISION_SIZE
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class SimulationAgent(AgentBase):
     """Агент, использующий предобученную модель для принятия решений (без обучения)."""
@@ -46,7 +46,7 @@ class SimulationAgent(AgentBase):
         self.memory_frames.clear()
         self._fill_initial_memory()
     
-    def act(self, vision: np.ndarray, scalars: np.ndarray, **kwargs) -> int:
+    def act(self, vision: np.ndarray, scalars: np.ndarray) -> int:
         """Принимает действие без исследования (epsilon=0)."""
         self.update_memory(vision)
         frames = self.get_state_stack()
