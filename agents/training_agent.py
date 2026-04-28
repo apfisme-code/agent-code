@@ -1,3 +1,4 @@
+import os
 from collections import deque
 import numpy as np
 import random
@@ -8,7 +9,7 @@ from .agent_base import AgentBase
 from dqn import DQN, device
 from env_const import (
     REPLAY_SIZE, MEMORY_LENGTH, EPS_START, ACTION_SPACE, BATCH_SIZE,
-    EPS_END, EPS_DECAY, LR, GAMMA
+    EPS_END, EPS_DECAY, LR, GAMMA, VISION_SIZE
 )
 
 class TrainingAgent(AgentBase):
@@ -26,12 +27,13 @@ class TrainingAgent(AgentBase):
         
         self.replay_buffer = deque(maxlen=REPLAY_SIZE)
         self.memory_frames = deque(maxlen=MEMORY_LENGTH)
+        self._fill_initial_memory()
         
         self.epsilon = EPS_START
         self.steps_done = 0
         
         # Загружаем чекпоинт, если указан
-        if load_path is not None:
+        if load_path and os.path.isfile(load_path):
             self._load_checkpoint(load_path)
         else:
             # Синхронизируем target-сеть с policy-сетью
@@ -70,23 +72,23 @@ class TrainingAgent(AgentBase):
     def update_memory(self, vision: np.ndarray):
         """Добавляет новый кадр в память (используется для стека)."""
         self.memory_frames.append(vision)
-        # Если памяти недостаточно, дублируем первый кадр
-        while len(self.memory_frames) < MEMORY_LENGTH:
-            self.memory_frames.append(vision)
     
     def get_state_stack(self) -> np.ndarray:
         """Возвращает текущий стек кадров."""
         return np.array(self.memory_frames)
     
+    def _fill_initial_memory(self):
+        """Заполняет память начальными (пустыми) кадрами, до получения первого наблюдения."""
+        dummy_frame = np.zeros((VISION_SIZE, VISION_SIZE), dtype=int)
+        for _ in range(MEMORY_LENGTH):
+            self.memory_frames.append(dummy_frame)
+
     def reset_memory(self):
-        """Очищает память перед началом нового эпизода."""
+        """Очищает память и заполняет пустыми кадрами."""
         self.memory_frames.clear()
+        self._fill_initial_memory()
     
     def act(self, vision: np.ndarray, scalars: np.ndarray) -> int:
-        """
-        Принимает решение. Если training=True, использует ε-жадную стратегию.
-        Если training=False, действует детерминированно (ε=0).
-        """
         self.update_memory(vision)
         frames = self.get_state_stack()
         frames_t = torch.FloatTensor(frames).unsqueeze(0).to(device)

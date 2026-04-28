@@ -1,7 +1,14 @@
 import numpy as np
 import random
-from env_const import GRID_SIZE, MAX_HUNGER, MAX_HEALTH, MAX_ENERGY, VISION_SIZE, VISION_RANGE, HUNGER_RESTORE, ENERGY_RESTORE, EPISODES, MAX_STEPS, TARGET_UPDATE
+from env_const import VISION_SIZE, VISION_RANGE
 
+GRID_SIZE = 10
+MAX_HUNGER = 100
+MAX_HEALTH = 100
+MAX_ENERGY = 100
+HUNGER_RESTORE = 30
+ENERGY_RESTORE = 30
+MAX_STEPS = 500
 
 # ------------------- СРЕДА -------------------
 class VirtualWorld:

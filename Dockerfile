@@ -17,7 +17,7 @@ COPY . .
 # Создание папки для сохранения моделей
 RUN mkdir -p /app/models
 
-# Запуск по умолчанию (обучение)
+# Запуск по умолчанию (обучение и проверка)
 ENTRYPOINT ["python", "main.py"]
-CMD ["--mode", "train"]
+CMD ["--mode", "train_and_test"]
 

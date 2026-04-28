@@ -1,4 +1,3 @@
-
 import argparse
 import os
 from virtual_world import VirtualWorld
@@ -6,7 +5,8 @@ from agents.simulation_agent import SimulationAgent
 from agents.training_agent import TrainingAgent
 from dqn import device
 import torch
-from env_const import TARGET_UPDATE
+
+TARGET_UPDATE = 100
 
 
 def train(episodes=500, save_path="models/agent_model.pth", load_path=None):
@@ -23,14 +23,10 @@ def train(episodes=500, save_path="models/agent_model.pth", load_path=None):
         if isinstance(checkpoint, dict) and 'episode' in checkpoint:
             start_episode = checkpoint['episode']
             print(f"Resuming from episode {start_episode}")
-    
-    for episode in range(episodes):
-        vision, scalars = env.reset()
-        agent.reset_memory()
-        total_reward = 0
-        step = 0
 
-    for episode in range(episodes):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    for episode in range(start_episode, start_episode + episodes):
         vision, scalars = env.reset()
         agent.reset_memory()           # очищаем память перед новым эпизодом
         total_reward = 0
@@ -47,12 +43,8 @@ def train(episodes=500, save_path="models/agent_model.pth", load_path=None):
             if step % TARGET_UPDATE == 0:
                 agent.update_target_network()
 
+        agent.save_checkpoint(save_path, episode)
         print(f"Episode {episode}, total reward: {total_reward:.2f}, steps: {step}, epsilon: {agent.epsilon:.3f}")
-    
-    # Финальное сохранение
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    agent.save_checkpoint(save_path, episode = start_episode + episodes)
-    print(f"Training finished. Model saved to {save_path}")
 
 
 def test(load_path="models/agent_model.pth", max_steps=1000):
@@ -75,7 +67,7 @@ def test(load_path="models/agent_model.pth", max_steps=1000):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["train", "test"], default="train")
+    parser.add_argument("--mode", choices=["train", "test", "train_and_test"], default="train_and_test")
     parser.add_argument("--episodes", type=int, default=500)
     parser.add_argument("--model", type=str, default="models/agent_model.pth")
     parser.add_argument("--load", type=str, default=None, help="Путь к модели для продолжения обучения")
@@ -83,5 +75,10 @@ if __name__ == "__main__":
 
     if args.mode == "train":
         train(episodes=1, save_path=args.model, load_path=args.model)
-
-    test(load_path=args.model)
+        test(load_path=args.model)
+        #train(episodes=args.episodes, save_path=args.model, load_path=args.model)
+    elif args.mode == "test":   
+        test(load_path=args.model)
+    elif args.mode == "train_and_test":
+        train(episodes=1, save_path=args.model, load_path=args.model)
+        test(load_path=args.model)
