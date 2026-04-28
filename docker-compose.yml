@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  agent:
+    build: .
+    # Режим можно переопределить через командную строку
+    command: --mode train --episodes 500
+    volumes:
+      - ./models:/app/models   # сохранение модели на хосте
+      - ./logs:/app/logs       # опционально для логов
+    stdin_open: true           # для возможности прерывания (Ctrl+C)
+    tty: true
