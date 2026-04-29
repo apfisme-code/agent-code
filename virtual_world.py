@@ -15,10 +15,8 @@ class VirtualWorld:
     def __init__(self):
         self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
         # размещаем объекты: 1-еда, 2-безопасное место
-        num_food = 3
-        num_safe = 3
-        self._place_objects(num_food, 1)
-        self._place_objects(num_safe, 2)
+        self._place_objects(3, 1)
+        self._place_objects(3, 2)
         self.reset()
 
     def _place_objects(self, count, obj_type):

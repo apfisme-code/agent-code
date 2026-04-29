@@ -100,7 +100,7 @@ class TrainingAgent(AgentBase):
     def learn(self):
         """Обучает policy_net на случайном батче из буфера."""
         if len(self.replay_buffer) < BATCH_SIZE:
-            return
+            return None
         batch = random.sample(self.replay_buffer, BATCH_SIZE)
         frames_stacks, scalars, actions, rewards, next_frames_stacks, next_scalars, dones = zip(*batch)
         
@@ -125,6 +125,8 @@ class TrainingAgent(AgentBase):
         # Обновление epsilon
         self.epsilon = EPS_END + (EPS_START - EPS_END) * np.exp(-self.steps_done / EPS_DECAY)
         self.steps_done += 1
+
+        return loss.item()
     
     def update_target_network(self):
         """Копирует веса из policy_net в target_net."""
