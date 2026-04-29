@@ -7,10 +7,15 @@ import torch.nn as nn
 import torch.optim as optim
 from .agent_base import AgentBase
 from dqn import DQN, device
-from env_const import (
-    REPLAY_SIZE, MEMORY_LENGTH, EPS_START, ACTION_SPACE, BATCH_SIZE,
-    EPS_END, EPS_DECAY, LR, GAMMA, VISION_SIZE
-)
+from env_const import MEMORY_LENGTH, ACTION_SPACE
+
+BATCH_SIZE = 32
+REPLAY_SIZE = 10000
+EPS_START = 1.0
+EPS_END = 0.05
+EPS_DECAY = 200
+LR = 0.001
+GAMMA = 0.99
 
 class TrainingAgent(AgentBase):
     """Агент, способный обучаться (DQN с воспроизведением опыта и целевой сетью)."""
@@ -21,14 +26,12 @@ class TrainingAgent(AgentBase):
             load_path: если указан, загружает полный чекпоинт (модель + оптимизатор + epsilon и др.).
                       Если None, инициализирует всё с нуля.
         """
+        super().__init__()  # инициализирует память
         self.policy_net = DQN().to(device)
         self.target_net = DQN().to(device)
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=LR)
         
-        self.replay_buffer = deque(maxlen=REPLAY_SIZE)
-        self.memory_frames = deque(maxlen=MEMORY_LENGTH)
-        self._fill_initial_memory()
-        
+        self.replay_buffer = deque(maxlen=REPLAY_SIZE)        
         self.epsilon = EPS_START
         self.steps_done = 0
         
@@ -69,38 +72,20 @@ class TrainingAgent(AgentBase):
         torch.save(checkpoint, save_path)
         print(f"Checkpoint saved to {save_path}")
     
-    def update_memory(self, vision: np.ndarray):
-        """Добавляет новый кадр в память (используется для стека)."""
-        self.memory_frames.append(vision)
-    
-    def get_state_stack(self) -> np.ndarray:
-        """Возвращает текущий стек кадров."""
-        return np.array(self.memory_frames)
-    
-    def _fill_initial_memory(self):
-        """Заполняет память начальными (пустыми) кадрами, до получения первого наблюдения."""
-        dummy_frame = np.zeros((VISION_SIZE, VISION_SIZE), dtype=int)
-        for _ in range(MEMORY_LENGTH):
-            self.memory_frames.append(dummy_frame)
-
-    def reset_memory(self):
-        """Очищает память и заполняет пустыми кадрами."""
-        self.memory_frames.clear()
-        self._fill_initial_memory()
-    
     def act(self, vision: np.ndarray, scalars: np.ndarray) -> int:
         self.update_memory(vision)
+
+        if random.random() < self.epsilon:
+            return random.randrange(ACTION_SPACE)
+
         frames = self.get_state_stack()
         frames_t = torch.FloatTensor(frames).unsqueeze(0).to(device)
         scalars_t = torch.FloatTensor(scalars).unsqueeze(0).to(device)
         
-        if random.random() < self.epsilon:
-            return random.randrange(ACTION_SPACE)
-        
         with torch.no_grad():
             q_vals = self.policy_net(frames_t, scalars_t)
             return q_vals.argmax().item()
-    
+
     def remember(self, scalars, action, reward, next_vision, next_scalars, done):
         """Сохраняет переход в буфер воспроизведения, используя текущий стек кадров."""
         current_stack = self.get_state_stack().copy()
